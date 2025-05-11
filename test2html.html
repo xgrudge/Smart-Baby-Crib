@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Baby Crib</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        :root {
+            --primary: #ff9bb3;
+            --secondary: #89c7f0;
+            --accent: #ffd166;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comfortaa', cursive;
+            background-color: #fef6f9;
+            background-image: url('https://img.freepik.com/free-vector/hand-drawn-baby-shower-background_23-2149435435.jpg?w=1380&t=st=1715423457~exp=1715424057~hmac=6c3f2a1c9c6c1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 30px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            color: var(--primary);
+            font-size: 2rem;
+        }
+        
+        .logo h1 {
+            font-family: 'Pacifico', cursive;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+        
+        .auth-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Comfortaa', cursive;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .login-btn {
+            background-color: var(--light);
+            color: var(--primary);
+            margin-right: 10px;
+        }
+        
+        .signup-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .logout-btn {
+            background-color: var(--danger);
+            color: white;
+            display: none; /* Hidden by default */
+        }
+        
+        .logout-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auth-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--dark);
+        }
+        
+        .auth-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .auth-form .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .auth-form input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Comfortaa', cursive;
+        }
+        
+        .auth-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Comfortaa', cursive;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .auth-form button:hover {
+            background-color: #ff7a9b;
+        }
+        
+        .switch-auth {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .switch-auth span {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .dashboard {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .welcome-message h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .dashboard-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-header h3 {
+            color: var(--primary);
+        }
+        
+        .card-header i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .sensor-readings {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        
+        .sensor-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .sensor-label {
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        
+        .mode-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .mode-label {
+            font-weight: bold;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .control-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--secondary);
+            color: white;
+            font-family: 'Comfortaa', cursive;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .status-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-on {
+            background-color: var(--success);
+        }
+        
+        .status-off {
+            background-color: var(--danger);
+        }
+        
+        .status-auto {
+            background-color: var(--info);
+        }
+        
+        .status-manual {
+            background-color: var(--warning);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-baby"></i>
+                <h1>Smart Baby Crib</h1>
+            </div>
+            <div class="auth-buttons">
+                <button class="login-btn" id="loginBtn">Log In</button>
+                <button class="signup-btn" id="signupBtn">Sign Up</button>
+                <button class="logout-btn" id="logoutBtn">Log Out</button>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Auth Modals -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-box">
+                <span class="close-btn" id="closeAuth">&times;</span>
+                <h2 id="authTitle">Login</h2>
+                <div class="alert" id="authAlert"></div>
+                <form class="auth-form" id="authForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" id="authSubmit">Login</button>
+                </form>
+                <div class="switch-auth">
+                    <span id="switchAuth">Don't have an account? Sign Up</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard -->
+        <div class="dashboard" id="dashboard">
+            <div class="welcome-message">
+                <h2>Welcome to Smart Baby Crib</h2>
+                <p>Monitor and control your baby's crib from anywhere</p>
+            </div>
+            
+            <div class="alert" id="dashboardAlert"></div>
+            
+            <div class="dashboard-grid">
+                <!-- Temperature and Humidity Card -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Environment</h3>
+                        <i class="fas fa-temperature-low"></i>
+                    </div>
+                    <div class="sensor-readings">
+                        <div>
+                            <div class="sensor-value" id="temperature">--</div>
+                            <div class="sensor-label">Temperature (°C)</div>
+                        </div>
+                        <div>
+                            <div class="sensor-value" id="humidity">--</div>
+                            <div class="sensor-label">Humidity (%)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Baby Comfort Card -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Baby Comfort</h3>
+                        <i class="fas fa-baby-carriage"></i>
+                    </div>
+                    <div class="sensor-readings">
+                        <div>
+                            <div class="sensor-value" id="soundLevel">--</div>
+                            <div class="sensor-label">Sound Level</div>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot" id="cryDot"></div>
+                            <span id="cryStatus">No cry detected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mode-switch">
+                        <span class="mode-label">Swing Mode:</span>
+                        <label class="switch">
+                            <input type="checkbox" id="swingModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="swingModeDot"></div>
+                        <span id="swingModeStatus">Auto Mode</span>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button class="control-btn" id="swingOnBtn" disabled>Start Swing</button>
+                        <button class="control-btn" id="swingOffBtn" disabled>Stop Swing</button>
+                    </div>
+                </div>
+                
+                <!-- Crib Elevation Card -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Crib Elevation</h3>
+                        <i class="fas fa-arrows-alt-v"></i>
+                    </div>
+                    <div class="sensor-readings">
+                        <div>
+                            <div class="sensor-value" id="distance">--</div>
+                            <div class="sensor-label">Distance (cm)</div>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot" id="objectDot"></div>
+                            <span id="objectStatus">No object detected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mode-switch">
+                        <span class="mode-label">Elevation Mode:</span>
+                        <label class="switch">
+                            <input type="checkbox" id="elevationModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="elevationModeDot"></div>
+                        <span id="elevationModeStatus">Auto Mode</span>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button class="control-btn" id="elevateBtn" disabled>Elevate</button>
+                        <button class="control-btn" id="lowerBtn" disabled>Lower</button>
+                    </div>
+                </div>
+                
+                <!-- LED Control Card -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Lighting</h3>
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="sensor-readings">
+                        <div>
+                            <div class="sensor-value" id="lightLevel">--</div>
+                            <div class="sensor-label">Light Level</div>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot" id="ledDot"></div>
+                            <span id="ledStatus">LED Off</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mode-switch">
+                        <span class="mode-label">LED Mode:</span>
+                        <label class="switch">
+                            <input type="checkbox" id="ledModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="ledModeDot"></div>
+                        <span id="ledModeStatus">Auto Mode</span>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button class="control-btn" id="ledOnBtn" disabled>Turn On</button>
+                        <button class="control-btn" id="ledOffBtn" disabled>Turn Off</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 Smart Baby Crib. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB365GFjy-QMrJeK1XMn7m0xw5bp_1yUzo",
+            authDomain: "smart-baby-crib-f9b6f.firebaseapp.com",
+            databaseURL: "https://smart-baby-crib-f9b6f-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smart-baby-crib-f9b6f",
+            storageBucket: "smart-baby-crib-f9b6f.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef1234567890"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // DOM Elements
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authContainer = document.getElementById('authContainer');
+        const closeAuth = document.getElementById('closeAuth');
+        const authTitle = document.getElementById('authTitle');
+        const authForm = document.getElementById('authForm');
+        const authSubmit = document.getElementById('authSubmit');
+        const switchAuth = document.getElementById('switchAuth');
+        const authAlert = document.getElementById('authAlert');
+        const dashboard = document.getElementById('dashboard');
+        const dashboardAlert = document.getElementById('dashboardAlert');
+
+        // Sensor elements
+        const temperatureEl = document.getElementById('temperature');
+        const humidityEl = document.getElementById('humidity');
+        const soundLevelEl = document.getElementById('soundLevel');
+        const lightLevelEl = document.getElementById('lightLevel');
+        const distanceEl = document.getElementById('distance');
+
+        // Status elements
+        const cryDot = document.getElementById('cryDot');
+        const cryStatus = document.getElementById('cryStatus');
+        const objectDot = document.getElementById('objectDot');
+        const objectStatus = document.getElementById('objectStatus');
+        const ledDot = document.getElementById('ledDot');
+        const ledStatus = document.getElementById('ledStatus');
+
+        // Mode toggles
+        const swingModeToggle = document.getElementById('swingModeToggle');
+        const elevationModeToggle = document.getElementById('elevationModeToggle');
+        const ledModeToggle = document.getElementById('ledModeToggle');
+
+        // Mode status elements
+        const swingModeDot = document.getElementById('swingModeDot');
+        const swingModeStatus = document.getElementById('swingModeStatus');
+        const elevationModeDot = document.getElementById('elevationModeDot');
+        const elevationModeStatus = document.getElementById('elevationModeStatus');
+        const ledModeDot = document.getElementById('ledModeDot');
+        const ledModeStatus = document.getElementById('ledModeStatus');
+
+        // Control buttons
+        const swingOnBtn = document.getElementById('swingOnBtn');
+        const swingOffBtn = document.getElementById('swingOffBtn');
+        const elevateBtn = document.getElementById('elevateBtn');
+        const lowerBtn = document.getElementById('lowerBtn');
+        const ledOnBtn = document.getElementById('ledOnBtn');
+        const ledOffBtn = document.getElementById('ledOffBtn');
+
+        // State variables
+        let isLoginMode = true;
+        let currentUser = null;
+
+        // Event Listeners
+        loginBtn.addEventListener('click', () => showAuthModal(true));
+        signupBtn.addEventListener('click', () => showAuthModal(false));
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    hideDashboard();
+                    showDashboardSuccess('Successfully logged out');
+                })
+                .catch(error => {
+                    showDashboardError('Failed to log out');
+                });
+        });
+        closeAuth.addEventListener('click', hideAuthModal);
+        switchAuth.addEventListener('click', toggleAuthMode);
+        authForm.addEventListener('submit', handleAuthSubmit);
+        
+        swingModeToggle.addEventListener('change', toggleSwingMode);
+        elevationModeToggle.addEventListener('change', toggleElevationMode);
+        ledModeToggle.addEventListener('change', toggleLedMode);
+        
+        swingOnBtn.addEventListener('click', () => controlSwing(true));
+        swingOffBtn.addEventListener('click', () => controlSwing(false));
+        elevateBtn.addEventListener('click', () => controlElevation(true));
+        lowerBtn.addEventListener('click', () => controlElevation(false));
+        ledOnBtn.addEventListener('click', () => controlLed(true));
+        ledOffBtn.addEventListener('click', () => controlLed(false));
+
+        // Initialize the app
+        init();
+
+        function init() {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    showDashboard();
+                    startDataListening();
+                } else {
+                    // User is signed out
+                    currentUser = null;
+                    hideDashboard();
+                }
+            });
+        }
+
+        function showAuthModal(login) {
+            isLoginMode = login;
+            authTitle.textContent = login ? 'Login' : 'Sign Up';
+            authSubmit.textContent = login ? 'Login' : 'Sign Up';
+            switchAuth.textContent = login ? "Don't have an account? Sign Up" : "Already have an account? Login";
+            authAlert.style.display = 'none';
+            authContainer.style.display = 'flex';
+        }
+
+        function hideAuthModal() {
+            authContainer.style.display = 'none';
+        }
+
+        function toggleAuthMode() {
+            showAuthModal(!isLoginMode);
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (isLoginMode) {
+                // Login
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(() => {
+                        hideAuthModal();
+                    })
+                    .catch(error => {
+                        showAuthError(error.message);
+                    });
+            } else {
+                // Sign up
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(() => {
+                        hideAuthModal();
+                    })
+                    .catch(error => {
+                        showAuthError(error.message);
+                    });
+            }
+        }
+
+        function showAuthError(message) {
+            authAlert.textContent = message;
+            authAlert.className = 'alert alert-danger';
+            authAlert.style.display = 'block';
+        }
+
+        function showDashboard() {
+            dashboard.style.display = 'block';
+            loginBtn.style.display = 'none';
+            signupBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+        }
+
+        function hideDashboard() {
+            dashboard.style.display = 'none';
+            loginBtn.style.display = 'inline-block';
+            signupBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+        }
+
+        function startDataListening() {
+            // Listen for sensor data updates
+            database.ref('latest').on('value', snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    updateSensorData(data);
+                }
+            });
+
+            // Listen for control updates
+            database.ref('controls').on('value', snapshot => {
+                const controls = snapshot.val();
+                if (controls) {
+                    updateControlStatus(controls);
+                }
+            });
+        }
+
+        function updateSensorData(data) {
+            // Update sensor readings
+            if (data.temperature !== undefined) {
+                temperatureEl.textContent = data.temperature.toFixed(1);
+            }
+            if (data.humidity !== undefined) {
+                humidityEl.textContent = data.humidity.toFixed(1);
+            }
+            if (data.sound_level !== undefined) {
+                soundLevelEl.textContent = data.sound_level;
+            }
+            if (data.light_level !== undefined) {
+                lightLevelEl.textContent = data.light_level;
+            }
+            if (data.distance !== undefined) {
+                distanceEl.textContent = data.distance;
+            }
+
+            // Update status indicators
+            if (data.cry_detected !== undefined) {
+                if (data.cry_detected) {
+                    cryDot.className = 'status-dot status-on';
+                    cryStatus.textContent = 'Baby crying detected!';
+                } else {
+                    cryDot.className = 'status-dot status-off';
+                    cryStatus.textContent = 'No cry detected';
+                }
+            }
+
+            if (data.object_detected !== undefined) {
+                if (data.object_detected) {
+                    objectDot.className = 'status-dot status-on';
+                    objectStatus.textContent = 'Object detected';
+                } else {
+                    objectDot.className = 'status-dot status-off';
+                    objectStatus.textContent = 'No object detected';
+                }
+            }
+
+            if (data.led_state !== undefined) {
+                if (data.led_state) {
+                    ledDot.className = 'status-dot status-on';
+                    ledStatus.textContent = 'LED On';
+                } else {
+                    ledDot.className = 'status-dot status-off';
+                    ledStatus.textContent = 'LED Off';
+                }
+            }
+        }
+
+        function updateControlStatus(controls) {
+            // Update mode toggles
+            if (controls.manual_sound_mode !== undefined) {
+                swingModeToggle.checked = controls.manual_sound_mode;
+                updateSwingModeStatus(controls.manual_sound_mode);
+            }
+
+            if (controls.manual_actuator_mode !== undefined) {
+                elevationModeToggle.checked = controls.manual_actuator_mode;
+                updateElevationModeStatus(controls.manual_actuator_mode);
+            }
+
+            if (controls.manual_mode !== undefined) {
+                ledModeToggle.checked = controls.manual_mode;
+                updateLedModeStatus(controls.manual_mode);
+            }
+
+            // Update swing motor status
+            if (controls.swing_motor_running !== undefined) {
+                swingOnBtn.disabled = controls.swing_motor_running || !swingModeToggle.checked;
+                swingOffBtn.disabled = !controls.swing_motor_running || !swingModeToggle.checked;
+            }
+        }
+
+        function toggleSwingMode() {
+            const manualMode = swingModeToggle.checked;
+            updateSwingModeStatus(manualMode);
+            database.ref('controls/manual_sound_mode').set(manualMode)
+                .then(() => {
+                    // Enable/disable manual controls based on mode
+                    swingOnBtn.disabled = !manualMode;
+                    swingOffBtn.disabled = !manualMode;
+                })
+                .catch(error => {
+                    showDashboardError('Failed to update swing mode');
+                });
+        }
+
+        function updateSwingModeStatus(manualMode) {
+            if (manualMode) {
+                swingModeDot.className = 'status-dot status-manual';
+                swingModeStatus.textContent = 'Manual Mode';
+            } else {
+                swingModeDot.className = 'status-dot status-auto';
+                swingModeStatus.textContent = 'Auto Mode';
+            }
+        }
+
+        function toggleElevationMode() {
+            const manualMode = elevationModeToggle.checked;
+            updateElevationModeStatus(manualMode);
+            database.ref('controls/manual_actuator_mode').set(manualMode)
+                .then(() => {
+                    // Enable/disable manual controls based on mode
+                    elevateBtn.disabled = !manualMode;
+                    lowerBtn.disabled = !manualMode;
+                })
+                .catch(error => {
+                    showDashboardError('Failed to update elevation mode');
+                });
+        }
+
+        function updateElevationModeStatus(manualMode) {
+            if (manualMode) {
+                elevationModeDot.className = 'status-dot status-manual';
+                elevationModeStatus.textContent = 'Manual Mode';
+            } else {
+                elevationModeDot.className = 'status-dot status-auto';
+                elevationModeStatus.textContent = 'Auto Mode';
+            }
+        }
+
+        function toggleLedMode() {
+            const manualMode = ledModeToggle.checked;
+            updateLedModeStatus(manualMode);
+            database.ref('controls/manual_mode').set(manualMode)
+                .then(() => {
+                    // Enable/disable manual controls based on mode
+                    ledOnBtn.disabled = !manualMode;
+                    ledOffBtn.disabled = !manualMode;
+                })
+                .catch(error => {
+                    showDashboardError('Failed to update LED mode');
+                });
+        }
+
+        function updateLedModeStatus(manualMode) {
+            if (manualMode) {
+                ledModeDot.className = 'status-dot status-manual';
+                ledModeStatus.textContent = 'Manual Mode';
+            } else {
+                ledModeDot.className = 'status-dot status-auto';
+                ledModeStatus.textContent = 'Auto Mode';
+            }
+        }
+
+        function controlSwing(start) {
+            database.ref('controls/swing_motor_command').set(start)
+                .catch(error => {
+                    showDashboardError('Failed to control swing');
+                });
+        }
+
+        function controlElevation(extend) {
+            database.ref('controls/extend_command').set(extend)
+                .catch(error => {
+                    showDashboardError('Failed to control elevation');
+                });
+        }
+
+        function controlLed(on) {
+            database.ref('controls/led_state').set(on)
+                .catch(error => {
+                    showDashboardError('Failed to control LED');
+                });
+        }
+
+        function showDashboardError(message) {
+            dashboardAlert.textContent = message;
+            dashboardAlert.className = 'alert alert-danger';
+            dashboardAlert.style.display = 'block';
+            setTimeout(() => {
+                dashboardAlert.style.display = 'none';
+            }, 5000);
+        }
+
+        function showDashboardSuccess(message) {
+            dashboardAlert.textContent = message;
+            dashboardAlert.className = 'alert alert-success';
+            dashboardAlert.style.display = 'block';
+            setTimeout(() => {
+                dashboardAlert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
